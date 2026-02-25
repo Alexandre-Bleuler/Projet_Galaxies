@@ -99,7 +99,7 @@ if __name__ == "__main__":
         
     # Saving average time data
     
-    np.savetxt("DATA/speedtests_data/" + output_name +f"_dt{delta_t}", average_time, fmt=["%d","%f"])
+    np.savetxt("DATA/speedtests_data/" + output_name +f"_dt{delta_t}_iter{number_of_updates}", average_time, fmt=["%d","%f"])
 
 
 
