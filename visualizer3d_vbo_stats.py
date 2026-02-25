@@ -25,6 +25,7 @@ import sdl2.ext
 from OpenGL.GL import *
 from OpenGL.GLU import *
 import ctypes
+import time 
 
 
 class Visualizer3D:
@@ -353,12 +354,11 @@ class Visualizer3D:
 
         update_counter = 0
         time_list=[0 for i in range(number_of_updates)]
-        fps_list=[0 for i in range(number_of_updates)]
         t1 = sdl2.SDL_GetTicks()
 
         #dt = 0.01  # Intervalle de temps fictif pour la mise à jour        
         # Boucle principale
-        while self.running and update_counter<number_of_update:
+        while self.running and update_counter<number_of_updates:
             # Gestion des événements
             self.running = self._handle_events()
             
@@ -377,8 +377,9 @@ class Visualizer3D:
             # Petite pause pour ne pas surcharger le CPU
             #sdl2.SDL_Delay(10)
             t2 = sdl2.SDL_GetTicks()
-
+            print(f"Frame time: {t2 - t1} ms", end='\r')
             t1 = t2
+            
         # Nettoyage
         self.cleanup()
         average_time = sum(time_list)/number_of_updates
