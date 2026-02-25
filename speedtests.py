@@ -8,7 +8,7 @@ import numpy as np
 from numpy.linalg import norm
 import matplotlib.pyplot as plt
 
-import visualizer3d_vbo_stats as vbos
+import visualizer3d_vbo as vbo
 import galaxy_generator as gg
 
 import Alexandre.v_naive as A_naive
@@ -89,17 +89,17 @@ if __name__ == "__main__":
         bounds = ((-100, 100), (-100, 100), (-100, 100))
 
         if is_class:         
-            visualizer = vbos.Visualizer3D(positions, colors, luminosities, bounds)
-            average_time[i,1]=visualizer.run(ncorps.update, delta_t,  number_of_updates)
+            visualizer = vbo.Visualizer3D(positions, colors, luminosities, bounds)
+            average_time[i,1]=visualizer.run_stats(ncorps.update, delta_t,  number_of_updates)
 
         else: 
-            visualizer = vbos.Visualizer3D(positions, colors, luminosities, bounds)
+            visualizer = vbo.Visualizer3D(positions, colors, luminosities, bounds)
             updater= lambda delta_t : B_vect.update_auto(delta_t, positions, velocities, masses)
-            average_time[i,1]=visualizer.run(updater, delta_t,  number_of_updates)
+            average_time[i,1]=visualizer.run_stats(updater, delta_t,  number_of_updates)
         
     # Saving average time data
     
-    np.savetxt("DATA/speedtests_data/" + output_name +f"_dt{delta_t}", average_time, fmt="%f")
+    np.savetxt("DATA/speedtests_data/" + output_name +f"_dt{delta_t}", average_time, fmt=["%d","%f"])
 
 
 
