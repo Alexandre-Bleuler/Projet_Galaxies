@@ -2,7 +2,8 @@ import sys
 import os
 sys.path.append(os.getcwd())
 
-import time
+### WARNING: the working directory must be the root of the project
+
 import numpy as np
 from numpy.linalg import norm
 import matplotlib.pyplot as plt
@@ -10,63 +11,20 @@ import matplotlib.pyplot as plt
 import visualizer3d_vbo_stats as vbos
 import galaxy_generator as gg
 
+import Alexandre.v_naive as A_naive
+import Bonaventure.Vectorise.vect as B_vect
 
-method_name = sys.argv[1]
+
+# Command line arguments
+
+output_name=sys.argv[1]
+is_class= bool(int(sys.argv[2]))
+delta_t=float(sys.argv[3])
 
 # For exemple :
-# output_name="Bonaventure_Naive"
+# output_name="Alexandre_Naive"
+# isclasse=1 for true or 0 for false
 
-
-import Bonaventure.Naive.naive as bon_naive
-
-def test(ncorps, delta_t): 
-    """Run the visualizer on an NBodies instance.
-
-    
-    Args:
-        ncorps: Instance containing the bodies to visualize.
-        delta_t: Time step passed to the visualizer's update callback.
-
-    Returns:
-        None
-    """
-
-    bodies_list=ncorps.bodies_list
-    number_of_body=len(bodies_list)
-    
-    points=np.zeros((number_of_body,3))
-    for i,body in enumerate(bodies_list):
-        points[i,:] = body.position
-   
-    colors = np.array([body.color for body in bodies_list])
-    
-    luminosities = np.ones(number_of_body).astype(np.float32)
-    
-    bounds = ((-100, 100), (-100, 100), (-100, 100))
-    
-    
-    visualizer = vbo.Visualizer3D(points, colors, luminosities, bounds)
-    visualizer.run(ncorps.update, delta_t)
-
-
-def run_with_stats(update_func, delta_t, steps=10):
-    """Execute the simulation without visualization for benchmarking.
-
-    Args:
-        update_func (function): The function that update the system.
-        delta_t (float): Time step to pass to ncorps.update.
-        steps (int): Represents the number of iterations that the simulation performs during the test phase
-
-    Returns:
-        tuple: (elapsed_seconds, fps) where fps is the measured 'frames per second".
-    """
-
-    t0 = time.time()
-    for _ in range(steps):
-        update_func(delta_t)
-    elapsed = time.time() - t0
-    fps = steps / elapsed if elapsed > 0 else float('inf')
-    return elapsed, fps
 
 def get_data_file_names(max_number_of_bodies=1000):
     """
@@ -81,63 +39,72 @@ def get_data_file_names(max_number_of_bodies=1000):
     The list of the file names in increasing order of the number of bodies 
     """
     name_list=[]
-    current_name=""
-    for i in range(1,max_number_of_bodies+1):
-        name_list.append=f"galaxy_{i*50}"
+    number_of_bodies=0
+    while number_of_bodies < max_number_of_bodies:
+        number_of_bodies+=50
+        name_list.append(f"DATA/galaxies_data/galaxy_{number_of_bodies}")
     return name_list
 
-def test_stats(update_func, delta_t, data_file_name): 
-    """
-    A function to test the naive N-bodies simulation 
-    
-    Args:
-        ncorps: the NBody object containing the bodies to be studied
-        delta_t: the time step of the study
 
-    Return: 
-        The average time used to update the system. 
-    """
-
-    data= np.loadtxt(data_file_name, dtype=np.double)
-    for i in range(data.shape[0]):
-        mass=data[i,0]
-        color=gg.generate_star_color(mass)
-        position=np.array([data[i,1],data[i,2],data[i,3]])
-        velocity=np.array([data[i,4],data[i,5],data[i,6]])
-
-    bodies_list=ncorps.bodies_list
-    number_of_body=len(bodies_list)
-    
-    points=np.zeros((number_of_body,3))
-
-    for i,body in enumerate(bodies_list):
-        points[i,:] = body.position
-   
-    # Génération de couleurs aléatoires
-    colors = np.array([body.color for body in bodies_list])
-    
-    # Génération de luminosités aléatoires
-    luminosities = np.ones(number_of_body).astype(np.float32)
-    
-    # Définition des limites de l'espace
-    bounds = ((-100, 100), (-100, 100), (-100, 100))
-    
-    # Création et lancement du visualiseur
-
-    visualizer = vbos.Visualizer3D(points, colors, luminosities, bounds)
-    average_time=visualizer.run(update_func, delta_t)
-    return average_time
 
 
 if __name__ == "__main__":
     
+    # Initialising statistical object 
+
     max_number_of_bodies=1000
     number_of_bodies=np.arange(50,max_number_of_bodies+50,50)
     data_file_names=get_data_file_names(max_number_of_bodies)
-    average_stats=np.array(number_of_bodies,3)
-    average_stats[:,0]=number_of_bodies
-    
+    average_time=np.zeros((len(number_of_bodies),2))
+    average_time[:,0]=number_of_bodies
+
+    number_of_updates=10
+
+    # Loop through all the galaxies of DATA/galaxies_data
+
     for i,name in enumerate(data_file_names):
+
+        print(f"\nTesting time of execution with {(i+1)*50} bodies")
+
+        # Gathering galaxy data
+
+        data=np.loadtxt(name, dtype=np.double)
+        masses=data[:,0]
+        colors=np.empty((len(masses),3))
+        for k,mass in enumerate(masses):
+            colors[k,:]=gg.generate_star_color(mass)
+        positions=np.column_stack([data[:,1],data[:,2],data[:,3]])
+        velocities=np.column_stack([data[:,4],data[:,5],data[:,6]])
+
+        if is_class:
+            ncorps=A_naive.NBodies(name)
+            
+
+        # Génération de luminosités
+        
+        luminosities = np.ones(np.shape(positions)[0]).astype(np.float32)
+
+        # Définition des limites de l'espace
+        
+        bounds = ((-100, 100), (-100, 100), (-100, 100))
+
+        if is_class:         
+            visualizer = vbos.Visualizer3D(positions, colors, luminosities, bounds)
+            average_time[i,1]=visualizer.run(ncorps.update, delta_t,  number_of_updates)
+
+        else: 
+            visualizer = vbos.Visualizer3D(positions, colors, luminosities, bounds)
+            updater= lambda delta_t : B_vect.update_auto(delta_t, positions, velocities, masses)
+            average_time[i,1]=visualizer.run(updater, delta_t,  number_of_updates)
+        
+    # Saving average time data
+    
+    np.savetxt("DATA/speedtests_data/" + output_name +f"_dt{delta_t}", average_time, fmt="%f")
+
+
+
+
+    
 
     
     
@@ -151,7 +118,7 @@ if __name__ == "__main__":
 
 
 ### OLD main
- """repeats = 3 # number of times a series of tests will be repeated
+"""repeats = 3 # number of times a series of tests will be repeated
     steps = 10 # represents the number of iterations that the simulation performs during the test phase
     delta_t = 0.1
     stars_list = []

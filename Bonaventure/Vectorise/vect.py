@@ -33,6 +33,16 @@ def update():
     velocities +=acc*DT
     return positions.astype(np.float32)
 
+def update_auto(DT, positions, velocities, masses):
+
+    start = time.time()
+    acc = compute_acce(positions, masses)
+    print("Compute time:", time.time() - start)
+
+    positions += velocities*DT + 0.5*acc*DT**2
+    velocities +=acc*DT
+    return positions.astype(np.float32)
+
 if __name__ == '__main__':
     
     N_ETOILES = 200

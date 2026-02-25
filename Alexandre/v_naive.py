@@ -2,13 +2,14 @@ import sys
 import os
 sys.path.append(os.getcwd())
 
-gravity_constant= 1.560339E-13
+### WARNING: the working directory must be the root of the project
 
 import numpy as np
 from numpy.linalg import norm
 import visualizer3d_vbo as vbo
 import galaxy_generator as gg
 
+gravity_constant= 1.560339E-13
 
 class Body() :
     """ A class to simulate a body of a galaxy."""
@@ -139,7 +140,7 @@ class NBodies():
 
 ## Tests
 
-ncorps=NBodies("Alexandre/test_100")
+ncorps=NBodies("Alexandre/1000_bodies")
 
 delta_t=0.001
 
@@ -176,4 +177,5 @@ def test(ncorps, delta_t):
     visualizer = vbo.Visualizer3D(points, colors, luminosities, bounds)
     visualizer.run(ncorps.update, delta_t)
 
-test(ncorps, delta_t)
+if __name__ == '__main__':
+    test(ncorps, delta_t)
