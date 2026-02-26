@@ -35,14 +35,14 @@ def compute_acce_numba(positions: np.ndarray, masses: np.ndarray)-> np.ndarray:
     return acc
 
 def update():
-    global positions, velocities
-
+    global positions, velocities, acc
     start = time.time()
-    acc = compute_acce_numba(positions, masses)
+    new_acc = compute_acce_numba(positions, masses)
+    positions += velocities * DT + 0.5 * new_acc * DT**2
+    new_acc2 = compute_acce_numba(positions, masses)
+    velocities += 0.5 * (new_acc2 + new_acc) * DT
+    start = time.time()
     print("Compute time:", time.time() - start)
-
-    positions += velocities*DT + 0.5*acc*DT**2
-    velocities +=acc*DT
     return positions.astype(np.float32)
 
 if __name__ == '__main__':

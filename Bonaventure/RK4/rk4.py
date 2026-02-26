@@ -34,15 +34,43 @@ def compute_acce_numba(positions: np.ndarray, masses: np.ndarray)-> np.ndarray:
         acc[i,2] = az
     return acc
 
+@numba.njit(parallel = True)
+def rk4_step(positions, velocities, masses, dt)-> np.ndarray:
+    # k1
+    k1_v = compute_acce_numba(positions, masses)  # dv/dt = a(x)
+    k1_x = velocities                             # dx/dt = v
+
+    # k2
+    pos_k2 = positions + 0.5 * dt * k1_x
+    vel_k2 = velocities + 0.5 * dt * k1_v
+    k2_v = compute_acce_numba(pos_k2, masses)
+    k2_x = vel_k2
+
+    # k3
+    pos_k3 = positions + 0.5 * dt * k2_x
+    vel_k3 = velocities + 0.5 * dt * k2_v
+    k3_v = compute_acce_numba(pos_k3, masses)
+    k3_x = vel_k3
+
+    # k4
+    pos_k4 = positions + dt * k3_x
+    vel_k4 = velocities + dt * k3_v
+    k4_v = compute_acce_numba(pos_k4, masses)
+    k4_x = vel_k4
+
+    
+    positions_new = positions + (dt/6.0) * (k1_x + 2.0*k2_x + 2.0*k3_x + k4_x)
+    velocities_new = velocities + (dt/6.0) * (k1_v + 2.0*k2_v + 2.0*k3_v + k4_v)
+
+    return positions_new, velocities_new
+
 def update():
     global positions, velocities
 
     start = time.time()
-    acc = compute_acce_numba(positions, masses)
+    positions, velocities = rk4_step(positions, velocities, masses, DT)
     print("Compute time:", time.time() - start)
 
-    positions += velocities*DT + 0.5*acc*DT**2
-    velocities +=acc*DT
     return positions.astype(np.float32)
 
 if __name__ == '__main__':
