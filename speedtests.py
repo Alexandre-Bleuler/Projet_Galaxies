@@ -1,29 +1,23 @@
 import sys
 import os
-sys.path.append(os.getcwd())
 
-### WARNING: the working directory must be the root of the project
+# Setting the root of the project in sys.path
+
+script_dir=os.path.dirname(__file__)
+sys.path.append(script_dir)
+
 
 import numpy as np
-from numpy.linalg import norm
-import matplotlib.pyplot as plt
 
 import visualizer3d_vbo as vbo
 import galaxy_generator as gg
 
-import Alexandre.v_naive as A_naive
-import Bonaventure.Vectorise.vect as B_vect
+import Versions.v_naive as v_naive
+import Versions.v_vect as v_vect
+import Versions.v_numba as v_numba
+import Versions.v_rk4 as v_rk4
+import Versions.v_verlet as v_verlet
 
-
-# Command line arguments
-
-output_name=sys.argv[1]
-is_class= bool(int(sys.argv[2]))
-delta_t=float(sys.argv[3])
-
-# For exemple :
-# output_name="Alexandre_Naive"
-# isclasse=1 for true or 0 for false
 
 
 def get_data_file_names(max_number_of_bodies=1000):
@@ -49,16 +43,34 @@ def get_data_file_names(max_number_of_bodies=1000):
 
 
 if __name__ == "__main__":
+
+    # Asking to the user the value of some parameters:
+
+    print("""\nEnter the name of the file where the results will be save: 
+(however be aware that the value of the time step and number of iterations will be added to the name)""")
+    output_name=input()
+    print(
+    """\nThe available versions are:\n
+- v_naive, number=0\n
+- v_vect, number=1\n
+- v_numba, number=2\n
+- v_rk4, number=3\n
+- v_verlet, number=4.\n
+Enter the number associated with the version you want to use:"""
+    )
+    version=int(input())
+    print("\nEnter the value of the time step you want to use:")
+    delta_t=float(input())
+    print("\nEnter the number of iterations you want to make:")
+    number_of_updates=int(input())
     
-    # Initialising statistical object 
+    # Initialising statistical objects
 
     max_number_of_bodies=1000
     number_of_bodies=np.arange(50,max_number_of_bodies+50,50)
     data_file_names=get_data_file_names(max_number_of_bodies)
     average_time=np.zeros((len(number_of_bodies),2))
     average_time[:,0]=number_of_bodies
-
-    number_of_updates=10
 
     # Loop through all the galaxies of DATA/galaxies_data
 
@@ -76,10 +88,6 @@ if __name__ == "__main__":
         positions=np.column_stack([data[:,1],data[:,2],data[:,3]])
         velocities=np.column_stack([data[:,4],data[:,5],data[:,6]])
 
-        if is_class:
-            ncorps=A_naive.NBodies(name)
-            
-
         # Génération de luminosités
         
         luminosities = np.ones(np.shape(positions)[0]).astype(np.float32)
@@ -88,59 +96,30 @@ if __name__ == "__main__":
         
         bounds = ((-100, 100), (-100, 100), (-100, 100))
 
-        if is_class:         
-            visualizer = vbo.Visualizer3D(positions, colors, luminosities, bounds)
-            average_time[i,1]=visualizer.run_stats(ncorps.update, delta_t,  number_of_updates)
+        # Setting the visualizer
+        
+        visualizer = vbo.Visualizer3D(positions, colors, luminosities, bounds)
 
-        else: 
-            visualizer = vbo.Visualizer3D(positions, colors, luminosities, bounds)
-            updater= lambda delta_t : B_vect.update_auto(delta_t, positions, velocities, masses)
-            average_time[i,1]=visualizer.run_stats(updater, delta_t,  number_of_updates)
+        match version:
+            case 0: 
+                ncorps=v_naive.NBodies(name)
+                average_time[i,1]=visualizer.run_stats(ncorps.update, delta_t,  number_of_updates)
+            case 1: 
+                updater=lambda delta_t : v_vect.update_stats(delta_t, positions, velocities, masses)
+                average_time[i,1]=visualizer.run_stats(updater, delta_t,  number_of_updates)
+            case 2: 
+                updater=lambda delta_t : v_numba.update_stats(delta_t, positions, velocities, masses)
+                average_time[i,1]=visualizer.run_stats(updater, delta_t,  number_of_updates)
+            case 3: 
+                updater=lambda delta_t : v_rk4.update_stats(delta_t, positions, velocities, masses)
+                average_time[i,1]=visualizer.run_stats(updater, delta_t,  number_of_updates)
+            case 4: 
+                updater=lambda delta_t : v_verlet.update_stats(delta_t, positions, velocities, masses)
+                average_time[i,1]=visualizer.run_stats(updater, delta_t,  number_of_updates)
+            case _:
+                raise ValueError("Error: not the number of an existing version!")
         
     # Saving average time data
     
     np.savetxt("DATA/speedtests_data/" + output_name +f"_dt{delta_t}_iter{number_of_updates}", average_time, fmt=["%d","%f"])
 
-
-
-
-    
-
-    
-    
-    """plt.figure()
-    plt.plot(stars_list, avg_fps_list)
-    plt.xlabel("Nombre d'étoiles")
-    plt.ylabel("FPS moyen")
-    plt.title("Evolution des perfomances")
-    plt.show()"""
-
-
-
-### OLD main
-"""repeats = 3 # number of times a series of tests will be repeated
-    steps = 10 # represents the number of iterations that the simulation performs during the test phase
-    delta_t = 0.1
-    stars_list = []
-    avg_fps_list = []
-
-
-    print("\nStarting")
-    for n_stars in Liste:
-        file_path = os.path.join(output_dir, f"galaxy_{n_stars}")
-        if not os.path.exists(file_path):
-            print(f"File not find: {file_path}")
-            continue
-        print(f"\n== {n_stars} stars: {file_path} ==")
-        fps_list = []
-        for r in range(1, repeats + 1):
-            ncorps = NBodies(file_path)
-            elapsed, fps = run_headless(ncorps, delta_t, steps=steps)
-            fps_list.append(fps)
-            print(f"Run {r}/{repeats}: {steps} steps -> {elapsed:.4f} s, {fps:.2f} FPS")
-        avg_fps = sum(fps_list) / len(fps_list) if fps_list else 0.0
-        stars_list.append(n_stars)
-        avg_fps_list.append(avg_fps)
-        print(f"Average FPS for {n_stars} stars: {avg_fps:.2f}\n")
-
-    print("\n End: The numbers of stars increase the iteration time.")"""

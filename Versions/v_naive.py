@@ -1,9 +1,20 @@
+import sys
+import os
+
+# Setting the root of the project in sys.path
+
+script_dir=os.path.dirname(__file__)
+project_dir=os.path.dirname(script_dir)
+sys.path.append(project_dir)
+
+
 import numpy as np
 from numpy.linalg import norm
 import visualizer3d_vbo as vbo
 import galaxy_generator as gg
 
 gravity_constant= 1.560339E-13
+
 class Body() :
     """ A class to simulate a body of a galaxy."""
 
@@ -110,8 +121,8 @@ class NBodies():
         for i,body in enumerate(bodies_list):
             points[i,:] = body.position
         return points
-
-    def update(self, delta_t) :
+        
+    def update(self, delta_t):
         """A function updating the position and the velocity
         of the vector given a certain time step, the acceleration
         being deduced from gravitationnal attraction.
@@ -130,3 +141,42 @@ class NBodies():
             body.update(delta_t,acceleration[i,:])
         return self.get_points()
 
+## Test
+
+def test(ncorps, delta_t): 
+    """
+    A function to test the naive N-bodies simulation 
+    
+    Args:
+        ncorps: the NBody object containing the bodies to be studied
+        delta_t: the time step of the study
+
+    Return: 
+        None
+    """
+
+    bodies_list=ncorps.bodies_list
+    number_of_body=len(bodies_list)
+    
+    points=np.zeros((number_of_body,3))
+    for i,body in enumerate(bodies_list):
+        points[i,:] = body.position
+   
+    # Génération de couleurs aléatoires
+    colors = np.array([body.color for body in bodies_list])
+    
+    # Génération de luminosités aléatoires
+    luminosities = np.ones(number_of_body).astype(np.float32)
+    
+    # Définition des limites de l'espace
+    bounds = ((-100, 100), (-100, 100), (-100, 100))
+    
+    # Création et lancement du visualiseur
+
+    visualizer = vbo.Visualizer3D(points, colors, luminosities, bounds)
+    visualizer.run(ncorps.update, delta_t)
+
+if __name__ == '__main__':
+    ncorps=NBodies("DATA/galaxies_data/galaxy_100")
+    delta_t=0.001
+    test(ncorps, delta_t)

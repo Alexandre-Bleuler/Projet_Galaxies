@@ -1,5 +1,12 @@
+import sys
 import os
-sys.path.append(os.getcwd())
+
+# Setting the root of the project in sys.path
+
+script_dir=os.path.dirname(__file__)
+project_dir=os.path.dirname(script_dir)
+sys.path.append(project_dir)
+
 
 gravity_constant= 1.560339E-13
 
@@ -151,7 +158,7 @@ def get_data(data_file_name):
     velocity=np.concatenate((data[:,4],data[:,5],data[:,6]), axis=1)
     return [mass, position, velocity]
 
-def compute_acceleration(mass, position, velocity)
+def compute_acceleration(mass, position, velocity):
     """ 
     Computes the acceleration for each bodies and put them in a vector
 
