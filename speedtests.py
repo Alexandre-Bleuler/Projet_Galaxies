@@ -8,6 +8,7 @@ sys.path.append(script_dir)
 
 
 import numpy as np
+import numba
 
 import visualizer3d_vbo as vbo
 import galaxy_generator as gg
@@ -46,7 +47,7 @@ if __name__ == "__main__":
 
     # Asking to the user the value of some parameters:
 
-    print("""\nEnter the name of the file where the results will be save: 
+    print("""\nEnter the name of the file where the results will be saved: 
 (however be aware that the value of the time step and number of iterations will be added to the name)""")
     output_name=input()
     print(
@@ -63,7 +64,7 @@ Enter the number associated with the version you want to use:"""
     delta_t=float(input())
     print("\nEnter the number of iterations you want to make:")
     number_of_updates=int(input())
-    
+
     # Initialising statistical objects
 
     max_number_of_bodies=1000
@@ -103,7 +104,7 @@ Enter the number associated with the version you want to use:"""
         match version:
             case 0: 
                 ncorps=v_naive.NBodies(name)
-                average_time[i,1]=visualizer.run_stats(ncorps.update, delta_t,  number_of_updates)
+                average_time[i,1]=visualizer.run_stats(ncorps.update_stats, delta_t,  number_of_updates)
             case 1: 
                 updater=lambda delta_t : v_vect.update_stats(delta_t, positions, velocities, masses)
                 average_time[i,1]=visualizer.run_stats(updater, delta_t,  number_of_updates)

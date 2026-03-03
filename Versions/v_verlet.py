@@ -50,16 +50,17 @@ def update():
     positions += velocities * DT + 0.5 * new_acc * DT**2
     new_acc2 = compute_acce_numba(positions, masses)
     velocities += 0.5 * (new_acc2 + new_acc) * DT
-    start = time.time()
     print("Compute time:", time.time() - start)
     return positions.astype(np.float32)
 
 def update_stats(delta_t, positions, velocities, masses):
+    time_begin= time.time()
     new_acc = compute_acce_numba(positions, masses)
     positions += velocities * delta_t + 0.5 * new_acc * delta_t**2
     new_acc2 = compute_acce_numba(positions, masses)
     velocities += 0.5 * (new_acc2 + new_acc) * delta_t
-    return positions.astype(np.float32)
+    elapsed_update_time=time.time()-time_begin
+    return elapsed_update_time, positions.astype(np.float32)
 
 if __name__ == '__main__':
     

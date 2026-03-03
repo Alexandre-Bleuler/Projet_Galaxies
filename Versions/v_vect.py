@@ -42,10 +42,12 @@ def update():
     return positions.astype(np.float32)
 
 def update_stats(delta_t, positions, velocities, masses):
+    time_begin= time.time()
     acc = compute_acce(positions, masses)
     positions += velocities*delta_t + 0.5*acc*delta_t**2
     velocities +=acc*delta_t
-    return positions.astype(np.float32)
+    elapsed_update_time=time.time()-time_begin
+    return elapsed_update_time, positions.astype(np.float32)
 
 if __name__ == '__main__':
     

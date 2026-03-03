@@ -405,10 +405,8 @@ class Visualizer3D:
             
             # Mise à jour via la fonction updater si fournie
             if updater is not None:
-                time_begin= time.time()
-                new_pos=updater(dt)
-                elapsed_update_time=time.time()-time_begin
-                time_list[update_counter]=elapsed_update_time
+                update_time, new_pos = updater(dt)
+                time_list[update_counter]=update_time
                 self.update_points(new_pos)
 
                 update_counter+=1

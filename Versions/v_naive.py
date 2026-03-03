@@ -10,6 +10,7 @@ sys.path.append(project_dir)
 
 import numpy as np
 from numpy.linalg import norm
+import time
 import visualizer3d_vbo as vbo
 import galaxy_generator as gg
 
@@ -140,7 +141,29 @@ class NBodies():
         for i,body in enumerate(self.bodies_list):
             body.update(delta_t,acceleration[i,:])
         return self.get_points()
+    
+    def update_stats(self, delta_t):
+        """A function updating the position and the velocity
+        of the vector given a certain time step, the acceleration
+        being deduced from gravitationnal attraction.
+        
+        Args:
+            delta_t: the time step
+        
+        Return: 
+            None
+        """
 
+        acceleration=np.zeros((len(self.bodies_list),3))
+        time_begin= time.time()
+        for i,body in enumerate(self.bodies_list):
+            acceleration[i,:]=self.gravity(i)/body.mass
+        for i,body in enumerate(self.bodies_list):
+            body.update(delta_t,acceleration[i,:])
+        elapsed_update_time=time.time()-time_begin
+        return elapsed_update_time, self.get_points()
+
+    
 ## Test
 
 def test(ncorps, delta_t): 
