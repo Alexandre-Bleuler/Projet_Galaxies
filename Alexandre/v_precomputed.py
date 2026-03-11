@@ -155,7 +155,7 @@ def compute_acce_numba(bodies_indexes, masses, positions, boxes_data, dp):
     return acc 
 
 
-def update(delta_t, masses, positions, velocities, dp, number_of_boxes):
+def update(delta_t, masses, positions, velocities, bounds, dp, number_of_boxes):
     """
     Compute the the new positions and velocities of the bodies.
     Args:
@@ -163,6 +163,8 @@ def update(delta_t, masses, positions, velocities, dp, number_of_boxes):
         masses: the array containing the masses of the galaxy's bodies. 
         positions: the (number_of_bodies, 3) ndarray containing the positions of the galaxy's bodies.
         veloctities: the (number_of_bodies, 3) ndarray containing the velocities of the galaxy's bodies.
+        bounds: the (2-3)-array where the first line is the minimal bounds for each axis,
+        and the second line the maximum ones for each axis.
         dp: the 3-array containing the boxes' spatial steps along each axis.
         number_of_boxes: the 3-array containing the number of boxes along each axis.
     Return:
@@ -180,7 +182,7 @@ def update(delta_t, masses, positions, velocities, dp, number_of_boxes):
     print("Compute time:", time.time() - start)
     return positions.astype(np.float32)
 
-def update_stats(delta_t, masses, positions, velocities, dp, number_of_boxes):
+def update_stats(delta_t, masses, positions, velocities, bounds, dp, number_of_boxes):
     """
     Compute the the new positions and velocities of the bodies and measure the time needed to do the computations.
     Args:
@@ -188,6 +190,8 @@ def update_stats(delta_t, masses, positions, velocities, dp, number_of_boxes):
         masses: the array containing the masses of the galaxy's bodies. 
         positions: the (number_of_bodies, 3) ndarray containing the positions of the galaxy's bodies.
         veloctities: the (number_of_bodies, 3) ndarray containing the velocities of the galaxy's bodies.
+        bounds: the (2-3)-array where the first line is the minimal bounds for each axis,
+        and the second line the maximum ones for each axis.
         dp: the 3-array containing the boxes' spatial steps along each axis.
         number_of_boxes: the 3-array containing the number of boxes along each axis.
     Return:
@@ -227,7 +231,7 @@ if __name__ == '__main__':
 
     dp=(bounds[1,:]-bounds[0,:])/number_of_boxes
 
-    updater= lambda delta_t : update(delta_t, masses, positions, velocities, dp, number_of_boxes)
+    updater= lambda delta_t : update(delta_t, masses, positions, velocities, bounds, dp, number_of_boxes)
 
     vizualizer_bounds=((bounds[0,0],bounds[1,0]), (bounds[0,1],bounds[1,1]), (bounds[0,2],bounds[1,2]))
 
