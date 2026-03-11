@@ -65,7 +65,7 @@ def update_stats(delta_t, positions, velocities, masses):
 if __name__ == '__main__':
     
     DT = 0.01
-    N_ETOILES = 2000
+    N_ETOILES = 1000
     masses, positions, velocities, colors = galaxy_generator.generate_galaxy(n_stars=N_ETOILES)
 
     masses = np.array(masses, dtype=np.float64)            
