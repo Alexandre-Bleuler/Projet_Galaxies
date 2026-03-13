@@ -115,6 +115,7 @@ Enter the number associated with the version you want to use:"""
                 updater=lambda delta_t : v_rk4.update_stats(delta_t, positions, velocities, masses)
                 average_time[i,1]=visualizer.run_stats(updater, delta_t,  number_of_updates)
             case 4: 
+                v_verlet.initialize_acc(positions, masses)
                 updater=lambda delta_t : v_verlet.update_stats(delta_t, positions, velocities, masses)
                 average_time[i,1]=visualizer.run_stats(updater, delta_t,  number_of_updates)
             case _:

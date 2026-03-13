@@ -46,22 +46,29 @@ def compute_acce_numba(positions: np.ndarray, masses: np.ndarray)-> np.ndarray:
 def update():
     global positions, velocities, acc
     start = time.time()
+    positions += velocities * DT + 0.5 * acc * DT**2
     new_acc = compute_acce_numba(positions, masses)
-    positions += velocities * DT + 0.5 * new_acc * DT**2
-    new_acc2 = compute_acce_numba(positions, masses)
-    velocities += 0.5 * (new_acc2 + new_acc) * DT
+    velocities += 0.5 * (acc + new_acc) * DT
+    acc = new_acc
     print("Compute time:", time.time() - start)
     return positions.astype(np.float32)
 
+
+acc = None  
+def initialize_acc(positions, masses):
+    global acc
+    acc = compute_acce_numba(positions, masses)
+
 def update_stats(delta_t, positions, velocities, masses):
+    
+    global acc
     time_begin= time.time()
+    positions += velocities * delta_t + 0.5 * acc * delta_t**2
     new_acc = compute_acce_numba(positions, masses)
-    positions += velocities * delta_t + 0.5 * new_acc * delta_t**2
-    new_acc2 = compute_acce_numba(positions, masses)
-    velocities += 0.5 * (new_acc2 + new_acc) * delta_t
+    velocities += 0.5 * (acc + new_acc) * delta_t
+    acc = new_acc
     elapsed_update_time=time.time()-time_begin
     return elapsed_update_time, positions.astype(np.float32)
-
 if __name__ == '__main__':
     
     DT = 0.01
@@ -70,9 +77,11 @@ if __name__ == '__main__':
 
     masses = np.array(masses, dtype=np.float64)            
     positions = np.array(positions, dtype=np.float64)          
-    velocities = np.array(velocities, dtype=np.float64)        
+    velocities = np.array(velocities, dtype=np.float64)   
+    acc = compute_acce_numba(positions, masses)  # acceleration calculation     
     colors_array = np.array(colors, dtype=np.float32)          
     luminosities = np.ones(len(masses), dtype=np.float32)
+
 
     if len(positions) > 0:
         max_coord = np.max(np.abs(positions)) * 2.0
