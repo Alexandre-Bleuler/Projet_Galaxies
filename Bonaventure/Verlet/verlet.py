@@ -2,9 +2,9 @@ import numpy as np
 import galaxy_generator
 import visualizer3d_vbo
 import time
-
 import pylab as plt
 import numba
+
 DT = 0.01
 G = 1.560339e-13
 
@@ -33,25 +33,27 @@ def compute_acce_numba(positions: np.ndarray, masses: np.ndarray)-> np.ndarray:
         acc[i,1] = ay
         acc[i,2] = az
     return acc
-
 def update():
     global positions, velocities, acc
     start = time.time()
+    positions += velocities * DT + 0.5 * acc * DT**2
     new_acc = compute_acce_numba(positions, masses)
-    positions += velocities * DT + 0.5 * new_acc * DT**2
-    new_acc2 = compute_acce_numba(positions, masses)
-    velocities += 0.5 * (new_acc2 + new_acc) * DT
+    velocities += 0.5 * (acc + new_acc) * DT
+    acc = new_acc
     print("Compute time:", time.time() - start)
     return positions.astype(np.float32)
 
 if __name__ == '__main__':
     
-    N_ETOILES = 2000
+    N_ETOILES = 200
     masses, positions, velocities, colors = galaxy_generator.generate_galaxy(n_stars=N_ETOILES)
 
     masses = np.array(masses, dtype=np.float64)            
     positions = np.array(positions, dtype=np.float64)          
-    velocities = np.array(velocities, dtype=np.float64)        
+    velocities = np.array(velocities, dtype=np.float64) 
+    acc = compute_acce_numba(positions, masses)  # acceleration calculation 
+
+
     colors_array = np.array(colors, dtype=np.float32)          
     luminosities = np.ones(len(masses), dtype=np.float32)
 
