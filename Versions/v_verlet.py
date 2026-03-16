@@ -19,6 +19,19 @@ G = 1.560339e-13
 
 @numba.njit(parallel = True)
 def compute_acce_numba(positions: np.ndarray, masses: np.ndarray)-> np.ndarray:
+    """
+    A function to compute a the acceleration
+    using forward Verlet scheme and the package numba. 
+
+    Args: 
+    positions: the (number_of_bodies,3)-array containing on one line the the
+    coordinates of the corresponding body.
+    masses: the masses of the bodies.
+
+    Return:
+    The array contaning the accelerations in the same style as positions.
+    """
+
     N = positions.shape[0]
     acc = np.zeros((N,3))
     for i in numba.prange(N): #parallel range
@@ -43,32 +56,66 @@ def compute_acce_numba(positions: np.ndarray, masses: np.ndarray)-> np.ndarray:
         acc[i,2] = az
     return acc
 
-def update():
+def update(delta_t):
+    """
+    Update the positions and velocities of the galaxy's bodies given the 
+    choosen time step.
+
+    Args:
+        delta_t: the choosen time step. 
+
+    Return:
+        positions: the (number_of_bodies,3)-array containing on one line the the
+        coordinates of the corresponding body.
+    """
+
     global positions, velocities, acc
     start = time.time()
-    positions += velocities * DT + 0.5 * acc * DT**2
-    new_acc = compute_acce_numba(positions, masses)
-    velocities += 0.5 * (acc + new_acc) * DT
-    acc = new_acc
-    print("Compute time:", time.time() - start)
-    return positions.astype(np.float32)
-
-
-acc = None  
-def initialize_acc(positions, masses):
-    global acc
-    acc = compute_acce_numba(positions, masses)
-
-def update_stats(delta_t, positions, velocities, masses):
-    
-    global acc
-    time_begin= time.time()
     positions += velocities * delta_t + 0.5 * acc * delta_t**2
     new_acc = compute_acce_numba(positions, masses)
     velocities += 0.5 * (acc + new_acc) * delta_t
     acc = new_acc
+    print("Compute time:", time.time() - start)
+    return positions.astype(np.float32)
+
+ 
+def initialize_acc(positions, masses):
+    """ 
+    A function to compute the initial acceleration
+
+    Args:
+        positions: the (number_of_bodies, 3) ndarray containing the positions of the galaxy's bodies.
+        masses: the array containing the masses of the galaxy's bodies.
+
+    Return:
+        The accecleration array in the same style as positions.
+    """
+    return compute_acce_numba(positions, masses)
+
+def update_stats(delta_t, positions, velocities, masses, acceleration):
+    """
+    Compute the the new positions and velocities of the bodies and measure the time needed to do the computations.
+    
+    Args:
+        delta_t: te choosen time step.  
+        positions: the (number_of_bodies, 3) ndarray containing the positions of the galaxy's bodies.
+        veloctities: the (number_of_bodies, 3) ndarray containing the velocities of the galaxy's bodies.
+        masses: the array containing the masses of the galaxy's bodies.
+        acceleration: the (number_of_bodies, 3) ndarray containing the acceleartions of the galaxy's bodies.
+
+    Return:
+        elapsed_update_time: the time needed to do the computations.
+        positions: the positions actualized.
+    """
+
+    time_begin= time.time()
+    positions += velocities * delta_t + 0.5 * acceleration * delta_t**2
+    new_acc = compute_acce_numba(positions, masses)
+    velocities += 0.5 * (acc + new_acc) * delta_t
+    acceleration = new_acc
     elapsed_update_time=time.time()-time_begin
     return elapsed_update_time, positions.astype(np.float32)
+
 if __name__ == '__main__':
     
     DT = 0.01
@@ -81,7 +128,7 @@ if __name__ == '__main__':
     acc = compute_acce_numba(positions, masses)  # acceleration calculation     
     colors_array = np.array(colors, dtype=np.float32)          
     luminosities = np.ones(len(masses), dtype=np.float32)
-
+    
 
     if len(positions) > 0:
         max_coord = np.max(np.abs(positions)) * 2.0

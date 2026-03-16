@@ -19,6 +19,19 @@ G = 1.560339e-13
 
 @numba.njit(parallel = True)
 def compute_acce_numba(positions: np.ndarray, masses: np.ndarray)-> np.ndarray:
+    """
+    A function to compute a the acceleration
+    using forward RK4 scheme and the package numba. 
+
+    Args: 
+    positions: the (number_of_bodies,3)-array containing on one line the the
+    coordinates of the corresponding body.
+    masses: the masses of the bodies.
+
+    Return:
+    The array contaning the accelerations in the same style as positions.
+    """
+
     N = positions.shape[0]
     acc = np.zeros((N,3))
     for i in numba.prange(N): #parallel range
@@ -45,6 +58,19 @@ def compute_acce_numba(positions: np.ndarray, masses: np.ndarray)-> np.ndarray:
 
 @numba.njit(parallel = True)
 def rk4_step(positions, velocities, masses, dt)-> np.ndarray:
+    """
+    A function to compute an iteration of the RK4 scheme. 
+
+    Args:  
+    positions: the (number_of_bodies, 3) ndarray containing the positions of the galaxy's bodies.
+    veloctities: the (number_of_bodies, 3) ndarray containing the velocities of the galaxy's bodies.
+    masses: the array containing the masses of the galaxy's bodies.
+    dt: te choosen time step.
+
+    Return: 
+
+    """
+    
     # k1
     k1_v = compute_acce_numba(positions, masses)  # dv/dt = a(x)
     k1_x = velocities                             # dx/dt = v
@@ -73,16 +99,42 @@ def rk4_step(positions, velocities, masses, dt)-> np.ndarray:
 
     return positions_new, velocities_new
 
-def update():
+def update(delta_t):
+    """
+    Update the positions and velocities of the galaxy's bodies given the 
+    choosen time step.
+
+    Args:
+        delta_t: the choosen time step. 
+
+    Return:
+        positions: the (number_of_bodies,3)-array containing on one line the the
+        coordinates of the corresponding body.
+    """
+
     global positions, velocities
 
     start = time.time()
-    positions, velocities = rk4_step(positions, velocities, masses, DT)
+    positions, velocities = rk4_step(positions, velocities, masses, delta_t)
     print("Compute time:", time.time() - start)
 
     return positions.astype(np.float32)
 
 def update_stats(delta_t, positions, velocities, masses):
+    """
+    Compute the the new positions and velocities of the bodies and measure the time needed to do the computations.
+    
+    Args:
+        delta_t: te choosen time step.  
+        positions: the (number_of_bodies, 3) ndarray containing the positions of the galaxy's bodies.
+        veloctities: the (number_of_bodies, 3) ndarray containing the velocities of the galaxy's bodies.
+        masses: the array containing the masses of the galaxy's bodies.
+
+    Return:
+        elapsed_update_time: the time needed to do the computations.
+        positions: the positions actualized.
+    """
+
     time_begin= time.time()
     positions, velocities = rk4_step(positions, velocities, masses, delta_t)
     elapsed_update_time=time.time()-time_begin
