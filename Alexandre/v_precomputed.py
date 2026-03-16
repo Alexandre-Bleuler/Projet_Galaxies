@@ -215,7 +215,7 @@ if __name__ == '__main__':
     delta_t = 0.01
     number_of_boxes=np.array([50,50,5])
     
-    data= np.loadtxt("DATA/galaxies_data/galaxy_1000", dtype=np.double)
+    data= np.loadtxt("/DATA/galaxies_data/galaxy_1000", dtype=np.double)
     masses=data[:,0]
     colors=np.empty((len(masses),3))
     for k,mass in enumerate(masses):
