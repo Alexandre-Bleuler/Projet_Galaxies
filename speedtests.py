@@ -9,6 +9,7 @@ sys.path.append(script_dir)
 
 import numpy as np
 import numba
+import matplotlib.pyplot as plt
 
 import visualizer3d_vbo as vbo
 import galaxy_generator as gg
@@ -125,3 +126,24 @@ Enter the number associated with the version you want to use:"""
     
     np.savetxt("DATA/speedtests_data/" + output_name +f"_dt{delta_t}_iter{number_of_updates}", average_time, fmt=["%d","%f"])
 
+    # Performance
+    times = average_time[:, 1]
+    bodies = average_time[:, 0]
+
+    plt.figure()
+    plt.plot(bodies, times, marker='o')
+    plt.xlabel("Number of bodies")
+    plt.ylabel("Average update time (s)")
+    plt.title("Performance vs Number of Bodies")
+    plt.grid()
+    plt.savefig("DATA/speedtests_data/" + output_name + f"_plot.png")
+    plt.show()
+
+    plt.figure()
+    plt.plot(bodies, times / bodies, marker='o')
+    plt.xlabel("Number of bodies")
+    plt.ylabel("Time per body")
+    plt.title("Time per Body Scaling")
+    plt.grid()
+    plt.savefig("DATA/speedtests_data/" + output_name + f"_per_body.png")
+    plt.show()

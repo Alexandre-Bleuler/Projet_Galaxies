@@ -5,7 +5,7 @@ import time
 
 import pylab as plt
 import numba
-DT = 0.01
+DT = 0.001
 G = 1.560339e-13
 
 @numba.njit(parallel = True)

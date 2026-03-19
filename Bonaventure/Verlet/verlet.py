@@ -5,7 +5,7 @@ import time
 import pylab as plt
 import numba
 
-DT = 0.01
+DT = 0.001
 G = 1.560339e-13
 
 @numba.njit(parallel = True)
@@ -45,7 +45,7 @@ def update():
 
 if __name__ == '__main__':
     
-    N_ETOILES = 200
+    N_ETOILES = 1000
     masses, positions, velocities, colors = galaxy_generator.generate_galaxy(n_stars=N_ETOILES)
 
     masses = np.array(masses, dtype=np.float64)            

@@ -3,7 +3,7 @@ import galaxy_generator
 import visualizer3d_vbo
 import time
 
-DT = 0.01
+DT = 0.001
 G = 1.560339e-13
 
 def compute_acce(positions, masses):

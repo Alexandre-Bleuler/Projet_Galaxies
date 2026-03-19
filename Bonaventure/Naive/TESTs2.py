@@ -7,7 +7,7 @@ import time
 
 
 N_ETOILES = 200
-DT = 0.01
+DT = 0.001
 
 masses, positions, velocities, colors = galaxy_generator.generate_galaxy(n_stars=N_ETOILES)
 
