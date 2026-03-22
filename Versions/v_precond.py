@@ -1,16 +1,19 @@
+import sys
+import os
+
+# Setting the root of the project in sys.path
+
+script_dir=os.path.dirname(__file__)
+project_dir=os.path.dirname(script_dir)
+sys.path.append(project_dir)
+
 import numpy as np
 import galaxy_generator
 import visualizer3d_vbo
 import time
 import numba
 
-DT = 0.001
 G = 1.560339e-13
-
-
-GRID_RESOLUTION_X = 20
-GRID_RESOLUTION_Y = 20
-GRID_RESOLUTION_Z = 2
 
 @numba.njit(parallel=True)
 def compute_bounds(positions):
@@ -65,7 +68,7 @@ def compute_bounds(positions):
     return min_vals, max_vals
 
 @numba.njit(parallel=True)
-def build_grid(positions, masses, bounds):
+def build_grid(positions, masses, bounds, nx, ny, nz):
     """
     Build a regular grid with resolution (nx, ny, nz).
 
@@ -83,9 +86,7 @@ def build_grid(positions, masses, bounds):
         min_bounds: min bounds of the grid
         num_cells: total number of cells
     """
-    nx = GRID_RESOLUTION_X
-    ny = GRID_RESOLUTION_Y
-    nz = GRID_RESOLUTION_Z
+ 
     min_bounds, max_bounds = bounds
 
     
@@ -148,7 +149,7 @@ def build_grid(positions, masses, bounds):
         col_indices[row_ptr[cell_index] + local_idx] = idx
         cell_counters[cell_index] += 1
 
-    return row_ptr, col_indices, cell_counts, cell_i, cell_j, cell_k, cell_size, min_bounds, num_cells
+    return row_ptr, col_indices, cell_counts, cell_size, num_cells
 
 @numba.njit(parallel=True)
 def compute_cell_properties(row_ptr, col_indices, cell_counts, positions, masses, num_cells):
@@ -196,13 +197,16 @@ def compute_cell_properties(row_ptr, col_indices, cell_counts, positions, masses
     return cell_mass, cell_cm
 
 @numba.njit(parallel=True)
-def compute_acce_grid(positions, masses):
+def compute_acce_grid(positions, masses, nx, ny, nz):
     """
     Compute the gravitational acceleration on each body using a grid-based approximation.
 
     Args:
         positions: (N, 3) array of body positions.
         masses: (N,) array of body masses.
+        nx: the bumber of boxes on x axis
+        ny: the bumber of boxes on y axis
+        nz: the bumber of boxes on z axis
 
     Return:
         acc: (N, 3) array of accelerations for each body.
@@ -210,17 +214,13 @@ def compute_acce_grid(positions, masses):
     N = positions.shape[0]
     acc = np.zeros((N, 3))
     bounds = compute_bounds(positions)
-    row_ptr, col_indices, cell_counts, cell_i, cell_j, cell_k, cell_size, min_bounds, num_cells = build_grid(
-        positions, masses, bounds
+    row_ptr, col_indices, cell_counts, cell_size, num_cells = build_grid(
+        positions, masses, bounds, nx, ny, nz
     )
 
     
     cell_mass, cell_cm = compute_cell_properties(row_ptr, col_indices, cell_counts, positions, masses, num_cells)
     
-    nx = GRID_RESOLUTION_X
-    ny = GRID_RESOLUTION_Y
-    nz = GRID_RESOLUTION_Z
-
     
     max_cell_size = max(cell_size[0], cell_size[1], cell_size[2])
     threshold = 2.0 * max_cell_size  
@@ -288,19 +288,70 @@ def update():
     Return:
         positions: updated (N, 3) array of body positions.
     """
-    global positions, velocities, acc
+    global positions, velocities, acc, masses, GRID_RESOLUTION_X, GRID_RESOLUTION_Y, GRID_RESOLUTION_Z
 
     start = time.time()
 
     positions += velocities * DT + 0.5 * acc * DT**2
-    new_acc = compute_acce_grid(positions, masses)
+    new_acc = compute_acce_grid(positions, masses, GRID_RESOLUTION_X, GRID_RESOLUTION_Y, GRID_RESOLUTION_Z)
     velocities += 0.5 * (acc + new_acc) * DT
     acc = new_acc
     print("Compute time:", time.time() - start)
     return positions.astype(np.float32)
 
+def initialize_acc(positions, masses, nx, ny, nz):
+    """ 
+    A function to compute the initial acceleration
+
+    Args:
+        positions: the (number_of_bodies, 3) ndarray containing the positions of the galaxy's bodies.
+        masses: the array containing the masses of the galaxy's bodies.
+        nx: the bumber of boxes on x axis.
+        ny: the bumber of boxes on y axis.
+        nz: the bumber of boxes on z axis.
+
+    Return:
+        The accecleration array in the same style as positions.
+    """
+    return compute_acce_grid(positions, masses, nx, ny, nz)
+
+def update_stats(delta_t, positions, velocities, masses, acceleration, nx, ny, nz):
+    """
+    Compute the the new positions and velocities of the bodies and measure the time needed to do the computations.
+    
+    Args:
+        delta_t: te choosen time step.  
+        positions: the (number_of_bodies, 3) ndarray containing the positions of the galaxy's bodies.
+        veloctities: the (number_of_bodies, 3) ndarray containing the velocities of the galaxy's bodies.
+        masses: the array containing the masses of the galaxy's bodies.
+        acceleration: the (number_of_bodies, 3) ndarray containing the acceleartions of the galaxy's bodies.
+        nx: the bumber of boxes on x axis.
+        ny: the bumber of boxes on y axis.
+        nz: the bumber of boxes on z axis.
+
+
+    Return:
+        elapsed_update_time: the time needed to do the computations.
+        positions: the positions actualized.
+    """
+
+    time_begin= time.time()
+    positions += velocities * delta_t + 0.5 * acceleration * delta_t**2
+    new_acc = compute_acce_grid(positions, masses, nx, ny, nz)
+    velocities += 0.5 * (acceleration + new_acc) * delta_t
+    acceleration = new_acc
+    elapsed_update_time=time.time()-time_begin
+    return elapsed_update_time, positions.astype(np.float32)
+
 if __name__ == "__main__":
+
+
+    DT = 0.001
     N_ETOILES = 1000
+    GRID_RESOLUTION_X = 20
+    GRID_RESOLUTION_Y = 20
+    GRID_RESOLUTION_Z = 1
+
     masses, positions, velocities, colors = galaxy_generator.generate_galaxy(
         n_stars = N_ETOILES
     )
@@ -309,7 +360,7 @@ if __name__ == "__main__":
     positions = np.array(positions, dtype=np.float64)
     velocities = np.array(velocities, dtype=np.float64)
 
-    acc = compute_acce_grid(positions, masses)
+    acc = compute_acce_grid(positions, masses, GRID_RESOLUTION_X, GRID_RESOLUTION_Y, GRID_RESOLUTION_Z)
 
     colors_array = np.array(colors, dtype=np.float32)
     luminosities = np.ones(len(masses), dtype=np.float32)

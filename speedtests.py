@@ -19,7 +19,7 @@ import Versions.v_vect as v_vect
 import Versions.v_numba as v_numba
 import Versions.v_rk4 as v_rk4
 import Versions.v_verlet as v_verlet
-
+import Versions.v_precond as v_precond
 
 
 def get_data_file_names(max_number_of_bodies=1000):
@@ -42,8 +42,6 @@ def get_data_file_names(max_number_of_bodies=1000):
     return name_list
 
 
-
-
 if __name__ == "__main__":
 
     # Asking to the user the value of some parameters:
@@ -53,11 +51,12 @@ if __name__ == "__main__":
     output_name=input()
     print(
     """\nThe available versions are:\n
-- v_naive, number=0\n
-- v_vect, number=1\n
-- v_numba, number=2\n
-- v_rk4, number=3\n
-- v_verlet, number=4.\n
+- v_naive, number=0;\n
+- v_vect, number=1;\n
+- v_numba, number=2;\n
+- v_rk4, number=3;\n
+- v_verlet, number=4;\n
+- v_precond, number=5.\n
 Enter the number associated with the version you want to use:"""
     )
     version=int(input())
@@ -96,7 +95,8 @@ Enter the number associated with the version you want to use:"""
 
         # Définition des limites de l'espace
         
-        bounds = ((-100, 100), (-100, 100), (-100, 100))
+        min_vals,max_vals=v_precond.compute_bounds(positions)
+        bounds=((min_vals[0],max_vals[0]), (min_vals[1],max_vals[1]), (min_vals[2],max_vals[2]))
 
         # Setting the visualizer
         
@@ -119,6 +119,11 @@ Enter the number associated with the version you want to use:"""
                 acceleration=v_verlet.initialize_acc(positions, masses)
                 updater=lambda delta_t : v_verlet.update_stats(delta_t, positions, velocities, masses, acceleration)
                 average_time[i,1]=visualizer.run_stats(updater, delta_t,  number_of_updates)
+            case 5:
+                nx ,ny, nz=20, 20, 1
+                acceleration=v_precond.initialize_acc(positions, masses, nx ,ny, nz)
+                updater=lambda delta_t : v_precond.update_stats(delta_t, positions, velocities, masses, acceleration, nx, ny, nz)
+                average_time[i,1]=visualizer.run_stats(updater, delta_t,  number_of_updates)
             case _:
                 raise ValueError("Error: not the number of an existing version!")
         
@@ -126,24 +131,3 @@ Enter the number associated with the version you want to use:"""
     
     np.savetxt("DATA/speedtests_data/" + output_name +f"_dt{delta_t}_iter{number_of_updates}", average_time, fmt=["%d","%f"])
 
-    # Performance
-    times = average_time[:, 1]
-    bodies = average_time[:, 0]
-
-    plt.figure()
-    plt.plot(bodies, times, marker='o')
-    plt.xlabel("Number of bodies")
-    plt.ylabel("Average update time (s)")
-    plt.title("Performance vs Number of Bodies")
-    plt.grid()
-    plt.savefig("DATA/speedtests_data/" + output_name + f"_plot.png")
-    plt.show()
-
-    plt.figure()
-    plt.plot(bodies, times / bodies, marker='o')
-    plt.xlabel("Number of bodies")
-    plt.ylabel("Time per body")
-    plt.title("Time per Body Scaling")
-    plt.grid()
-    plt.savefig("DATA/speedtests_data/" + output_name + f"_per_body.png")
-    plt.show()

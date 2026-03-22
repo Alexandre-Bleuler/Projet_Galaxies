@@ -115,6 +115,7 @@ def update_stats(delta_t, positions, velocities, masses, acceleration):
     acceleration = new_acc
     elapsed_update_time=time.time()-time_begin
     return elapsed_update_time, positions.astype(np.float32)
+
 if __name__ == '__main__':
     
     DT = 0.01
