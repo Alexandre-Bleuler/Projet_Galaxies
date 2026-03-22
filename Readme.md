@@ -68,6 +68,6 @@ Les mesures de performances ont été réalisés avec les paramètre suivants :
 - pour la version avec préconditionnement par grille, un découpage de 20x20x1 a été utilisé. 
 L'ensemble des résultats sont résumés sur le graphique suivant (échelle logarithmique en ordonnée) :
 
-
-<br><center>![Erreur d'affichage]("graphics_method.png" )
-</center><br>
+<figure>
+    <img src="graphics_method.png" width="500" height="300">
+</figure>
