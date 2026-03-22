@@ -44,6 +44,7 @@ Pour améliorer davantage les performances, un préconditionnement par grille pe
 - l'espace est découpé en boîtes;
 - la masse totale des corps situé dans chaque boîte est calculé de même que le centre de gravité associé;
 - si un corps donné est suffisamment loin d'une boîte donnée, le calcul de l'accélération des autre corps dans la boîte est approximé raisonnablement par l'attraction du corps virtuel associé à la masse totale et le centre de gravité de la boîte. 
+
 Le fichier `Versions/v_precond.py` implémente cela.
 
 ## Performances
@@ -52,7 +53,7 @@ Le fichier `Versions/v_precond.py` implémente cela.
 
 
 La philosophie pour comparer les versions est la suivante :
-- chaque version calcule l'évolution de la galaxie sur un nombre d'itération donné et une gamme de nombre de corps;
+- chaque version calcule l'évolution de la galaxie sur un nombre d'itérations donné et une gamme de nombre de corps;
 - pour chaque version et chaque nombre de corps, le temps moyen pour réaliser une itération est calculé;
 - pour chaque version et chaque nombre d'étoiles, le temps moyen d'itération est enregistré afin de pouvoir être utilisé ultérieurement pour réaliser les comparaisons entre versions.
 
@@ -60,3 +61,13 @@ Pour ce faire, le fichier `speedtests.py` a été utilisé. Il permet de choisir
 
 ### Les résultats
 
+Les mesures de performances ont été réalisés avec les paramètre suivants :
+- des galaxies de 50 à 1000 corps avec un pas de 50 ;
+- un pas de temps de 0.01;
+- 10 itérations par galaxie;
+- pour la version avec préconditionnement par grille, un découpage de 20x20x1 a été utilisé. 
+L'ensemble des résultats sont résumés sur le graphique suivant (échelle logarithmique en ordonnée) :
+
+
+<br><center>![Erreur d'affichage]("graphics_method.png" )
+</center><br>
