@@ -1,4 +1,4 @@
-# Projet Python : simulation de Galaxies
+# Projet Python : simulation de galaxies
 
 ## Auteurs:
 - Bleuler Alexandre
@@ -8,7 +8,7 @@
 
 ## Introduction
 
-Le but de ce projet est de simuler ## un problème à $N$ corps mûs par la gravité, ici une galaxie. 
+Le but de ce projet est de simuler un problème à $N$ corps mûs par la gravité, ici une galaxie. 
 L'objectif principal est d'utiliser diverses méthodes pour ce faire et de comparer leurs performances. Les packages suivants sont nécessaires  pour exécuter l'ensemble des fichiers:
 - `numpy`;
 - `matplotlib`;
@@ -20,23 +20,23 @@ L'objectif principal est d'utiliser diverses méthodes pour ce faire et de compa
 
 ### La version naïve
 
-La première version est une version simple utilisant un schéma d'Euler explicite pour le calcul des accélérations et les mécanismes basiques de Python sans souci d'optimisation. Elle est codée dans le fichier `Versions/v_naive.py`. 
+La première version est une version simple utilisant un schéma d'Euler explicite pour le calcul des accélérations et les mécanismes orientés objet de Python sans souci d'optimisation. Elle est codée dans le fichier `Versions/v_naive.py`. 
 
 ### La version vectorisée
 
-Afin d'améliorer la version naïve, une vectorisation des calculs d'accélération a notamment été réalisée. Elle est codée dans le fichier `Versions/v_vect.py`.
+Afin d'améliorer la version naïve, l'utilisation des classes est abandonnée et est remplacée par une vectorisation des calculs d'accélérations. Elle est codée dans le fichier `Versions/v_vect.py`.
 
 ### La version avec `numba`
 
-Une autre option pour améliorer les performances est d'utilisé le package `numba` au lieu de vectoriser les calculs. Cette version est codée dans le fichier `Versions/v_numba.py`.
+Une autre option pour améliorer les performances est d'utiliser le package `numba` au lieu de vectoriser les calculs. Cela permet par exemple de paralléliser les boucles qui apparaissent dans le code sans la vectorisation. Cette version est codée dans le fichier `Versions/v_numba.py`.
 
 ### La version avec un schéma de RK4
 
-Il est également possible de changer le schéma d'intégration afin d'améliorer l'approximation faire sur l'accélération. Ceci est réalisé dans le fichier `Versions/v_rk4.py`.
+Il est également possible de changer le schéma d'intégration afin d'améliorer l'approximation faite sur l'accélération. Nous changeons ici le schéma d'Euler d'ordre 1 par un schéma de Runge-Kutta d'ordre 4 (RK4) classique. Ceci est réalisé dans le fichier `Versions/v_rk4.py`.
 
 ### La version avec un schéma de Verlet
 
-Les schémas d'Euler et RK4 ne préserve pas l'énergie du système, ce qui déstabilise l'orbite des étoiles au fur et à mesure des itérations. Le schéma de Verlet peut alors être utilisé pour pallier ce problème, comme cela a été fait dans le ficheir `Versions/v_verlet.py`.
+Les schémas d'Euler et RK4 ne préservent pas l'énergie du système, ce qui déstabilise l'orbite des étoiles au fur et à mesure des itérations. Le schéma de Verlet, d'ordre 2, peut alors être utilisé pour pallier ce problème. Cela a été mis en place dans le fichier `Versions/v_verlet.py`.
 
 ### La version avec préconditionnement par grille
 
@@ -53,7 +53,7 @@ Le fichier `Versions/v_precond.py` implémente cela.
 
 
 La philosophie pour comparer les versions est la suivante :
-- chaque version calcule l'évolution de la galaxie sur un nombre d'itérations donné et une gamme de nombre de corps;
+- chaque version calcule l'évolution de la galaxie à pas de temps fixé, sur un nombre d'itérations donné et une gamme de nombre de corps suffisamment large;
 - pour chaque version et chaque nombre de corps, le temps moyen pour réaliser une itération est calculé;
 - pour chaque version et chaque nombre d'étoiles, le temps moyen d'itération est enregistré afin de pouvoir être utilisé ultérieurement pour réaliser les comparaisons entre versions.
 
@@ -66,8 +66,11 @@ Les mesures de performances ont été réalisés avec les paramètre suivants :
 - un pas de temps de 0.01;
 - 10 itérations par galaxie;
 - pour la version avec préconditionnement par grille, un découpage de 20x20x1 a été utilisé. 
-L'ensemble des résultats sont résumés sur le graphique suivant (échelle logarithmique en ordonnée) :
+
+L'ensemble des résultats sont résumés sur le graphique suivant (échelle logarithmique en ordonnée) réalisé à l'aide du fichier `graphics.py` :
 
 <figure>
     <img src="graphics_method.png" width="500" height="300">
 </figure>
+
+Notons que pour les versions utilisant `numba` (donc toutes sauf les deux premières), le temps moyen d'itération de la galaxie à 50 corps est perturbé par le temps de compilation induit par le package. Comme seulement 10 itérations sont réalisées pour chaque galaxie, le temps moyen d'itération pour le cas à 50 corps est ainsi essentiellement une mesure du temps de compilation initial de la version puisque ce dernier est très largement supérieur au temps de calcul d'une itération.
